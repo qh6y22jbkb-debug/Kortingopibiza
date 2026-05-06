@@ -53,8 +53,6 @@ table.ratio th:last-child{border-right:none}
 table.ratio td{padding:.3rem .4rem;text-align:center;border:1px solid rgba(255,255,255,.1);min-width:70px;font-size:.95rem}
 table.ratio input{width:68px;text-align:center;background:rgba(255,255,255,.05);border:none;border-bottom:2px dashed rgba(255,255,255,.3);color:#fff;font-size:.95rem;font-family:'Nunito',sans-serif;font-weight:600;padding:.15rem;outline:none;border-radius:0}
 table.ratio input:focus{border-bottom-color:var(--ibiza-yellow)}
-table.ratio input.ok{border-bottom-color:#22c55e;color:#4ade80}
-table.ratio input.err{border-bottom-color:var(--ibiza-pink);color:var(--ibiza-pink)}
 .answer-box{background:rgba(0,201,177,.08);border:1.5px dashed var(--ibiza-teal);border-radius:.8rem;padding:1rem;margin-bottom:.8rem;text-align:center}
 .answer-box label{font-size:.8rem;color:var(--ibiza-teal);font-weight:700;display:block;margin-bottom:.5rem}
 .answer-row{display:flex;align-items:center;justify-content:center;gap:.5rem}
@@ -87,6 +85,7 @@ table.ratio input.err{border-bottom-color:var(--ibiza-pink);color:var(--ibiza-pi
 <body>
 <div class="bg-stars" id="stars"></div>
 <div id="app">
+
 <div id="screen-start" class="screen active">
   <div style="text-align:center;margin-bottom:.5rem">
     <div style="font-size:2.5rem">🌴🦩🌴</div>
@@ -107,6 +106,7 @@ table.ratio input.err{border-bottom-color:var(--ibiza-pink);color:var(--ibiza-pi
     <button class="btn-ibiza btn-hard" onclick="startGame('hard')">⭐⭐⭐ Familie Fortuin</button>
   </div>
 </div>
+
 <div id="screen-game" class="screen" style="justify-content:flex-start;padding-top:1rem">
   <div class="score-bar">
     <span class="q-counter">Vraag <span id="q-num">1</span> van 8</span>
@@ -118,7 +118,7 @@ table.ratio input.err{border-bottom-color:var(--ibiza-pink);color:var(--ibiza-pi
     <div class="q-story" id="q-story"></div>
     <div id="q-pricetag"></div>
     <div class="q-question" id="q-question"></div>
-    <div class="attempts-row" id="attempts-row">
+    <div class="attempts-row">
       <div class="attempt-dot" id="atdot0"></div>
       <div class="attempt-dot" id="atdot1"></div>
       <span class="attempt-label" id="attempts-label">2 pogingen</span>
@@ -140,6 +140,7 @@ table.ratio input.err{border-bottom-color:var(--ibiza-pink);color:var(--ibiza-pi
     </div>
   </div>
 </div>
+
 <div id="screen-end" class="screen">
   <div class="end-big" id="end-emoji">🏆</div>
   <div class="neon-title" style="font-size:2.5rem;margin:.4rem 0" id="end-title">Goed gedaan!</div>
@@ -153,6 +154,7 @@ table.ratio input.err{border-bottom-color:var(--ibiza-pink);color:var(--ibiza-pi
   </div>
 </div>
 </div>
+
 <script>
 const PRODUCTS=[
   {name:'zonnebril',emoji:'🕶️',prices:[20,30,40,50,60,80]},
@@ -174,10 +176,13 @@ const EASY_PCTS=[10,20,25,50];
 const MED_PCTS=[10,15,20,25,30,40,50];
 const HARD_PCTS=[5,10,12,15,20,25,30,35,40];
 const MAX_ATTEMPTS=2;
-let currentDiff='easy',questions=[],qIdx=0,score=0,hintUsed=false,answered=false,attempts=0;
-function pick(a){return a[Math.floor(Math.random()*a.length)]}
-function r2(n){return Math.round(n*100)/100}
-function eurClean(n){return '€'+n.toFixed(2).replace('.',',')}
+
+let currentDiff='easy',questions=[],qIdx=0,score=0,hintUsed=false,attempts=0,questionDone=false;
+
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function r2(n){return Math.round(n*100)/100;}
+function eurClean(n){return '€'+n.toFixed(2).replace('.',',');}
+
 function genQ(diff){
   const prod=pick(PRODUCTS);
   const pcts=diff==='easy'?EASY_PCTS:diff==='medium'?MED_PCTS:HARD_PCTS;
@@ -213,6 +218,7 @@ function genQ(diff){
       finalAnswer:oldPrice,unit:'€',label:`Originele prijs: ${eurClean(oldPrice)}`};
   }
 }
+
 function buildA(old,pct,disc,nw,diff){
   const cols=[{tA:100,bA:old}];
   if(diff==='easy')cols.push({tA:10,bA:r2(old/10)});
@@ -236,30 +242,56 @@ function buildC(old,pct,nw,diff){
   else cols.push({tA:5,bA:r2(old/20)});
   cols.push({tA:100,bA:old});return cols;
 }
+
 function renderPriceTag(q){
   const el=document.getElementById('q-pricetag');
   const t=q.priceTag;
-  if(!t){el.innerHTML='';return;}
   if(t.toon==='was-korting'){
     el.innerHTML=`<div class="price-tag"><span class="was">€${t.was.toFixed(2).replace('.',',')}</span><span>→</span><span style="color:var(--ibiza-pink);font-size:1.2rem">${t.korting}% KORTING</span></div>`;
   }else if(t.toon==='was-nu'){
     el.innerHTML=`<div class="price-tag"><span class="was">was €${t.was.toFixed(2).replace('.',',')}</span><span>→</span><span>nu €${t.nu.toFixed(2).replace('.',',')}</span></div>`;
-  }else if(t.toon==='nu-korting'){
+  }else{
     el.innerHTML=`<div class="price-tag"><span>€${t.nu.toFixed(2).replace('.',',')} betaald</span><span style="opacity:.5">|</span><span style="color:var(--ibiza-pink)">${t.korting}% korting</span></div>`;
   }
 }
+
 function updateAttemptDots(){
-  for(let i=0;i<MAX_ATTEMPTS;i++){document.getElementById('atdot'+i).classList.toggle('used',i<attempts);}
-  const remaining=MAX_ATTEMPTS-attempts;
-  const lbl=document.getElementById('attempts-label');
-  if(remaining===MAX_ATTEMPTS)lbl.textContent=`${MAX_ATTEMPTS} pogingen`;
-  else if(remaining===1)lbl.textContent='nog 1 poging';
-  else lbl.textContent='geen pogingen meer';
+  for(let i=0;i<MAX_ATTEMPTS;i++){
+    document.getElementById('atdot'+i).classList.toggle('used',i<attempts);
+  }
+  const rem=MAX_ATTEMPTS-attempts;
+  document.getElementById('attempts-label').textContent=
+    rem===MAX_ATTEMPTS?`${MAX_ATTEMPTS} pogingen`:rem===1?'nog 1 poging':'geen pogingen meer';
 }
+
+function lockQuestion(correct){
+  questionDone=true;
+  document.getElementById('final-answer').readOnly=true;
+  document.getElementById('btn-check').style.display='none';
+  document.getElementById('btn-hint').style.display='none';
+  document.getElementById('btn-next').style.display='inline-block';
+  const dot=document.getElementById('dot-'+qIdx);
+  dot.classList.remove('current');
+  dot.classList.add(correct?'correct':'skipped');
+}
+
+function revealAnswer(){
+  const q=questions[qIdx];
+  const fa=document.getElementById('final-answer');
+  const fb=document.getElementById('feedback-box');
+  const answerStr=q.unit==='€'?eurClean(q.finalAnswer):`${q.finalAnswer}%`;
+  fa.value=q.unit==='€'?q.finalAnswer.toFixed(2).replace('.',','):String(q.finalAnswer);
+  fa.className='err';
+  fb.innerHTML=`Het goede antwoord is: <span style="color:var(--ibiza-yellow);font-size:1.4rem"> ${answerStr}</span><br><span style="font-size:.9rem;opacity:.7">${q.label} — geen punten</span>`;
+  fb.className='feedback-box show reveal';
+  lockQuestion(false);
+}
+
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
 }
+
 function startGame(diff){
   currentDiff=diff;questions=[];
   for(let i=0;i<8;i++)questions.push(genQ(diff));
@@ -267,11 +299,15 @@ function startGame(diff){
   document.getElementById('score-val').textContent='0';
   const dr=document.getElementById('dots-row');dr.innerHTML='';
   for(let i=0;i<8;i++){const d=document.createElement('div');d.className='dot';d.id='dot-'+i;dr.appendChild(d);}
-  showScreen('game');renderQ();
+  showScreen('game');
+  renderQ();
 }
+
 function renderQ(){
   const q=questions[qIdx];
-  answered=false;hintUsed=false;attempts=0;
+  questionDone=false;
+  hintUsed=false;
+  attempts=0;
   document.getElementById('q-num').textContent=qIdx+1;
   document.querySelectorAll('.dot').forEach((d,i)=>{d.classList.remove('current');if(i===qIdx)d.classList.add('current');});
   const badge=document.getElementById('q-badge');
@@ -285,7 +321,7 @@ function renderQ(){
   document.getElementById('hint-box').textContent='';
   document.getElementById('feedback-box').className='feedback-box';
   document.getElementById('feedback-box').textContent='';
-  document.getElementById('btn-hint').style.display=currentDiff==='hard'?'none':'inline-block';
+  document.getElementById('btn-hint').style.display='inline-block';
   document.getElementById('btn-check').style.display='inline-block';
   document.getElementById('btn-next').style.display='none';
   const fa=document.getElementById('final-answer');
@@ -298,73 +334,82 @@ function renderQ(){
   const card=document.getElementById('question-card');
   card.classList.remove('pop-in');void card.offsetWidth;card.classList.add('pop-in');
 }
+
 function showHint(){
+  if(questionDone)return;
   const q=questions[qIdx];
-  const hb=document.getElementById('hint-box');
-  hb.textContent='💡 Tip van Nick Slick: '+q.hint;
-  hb.className='hint-box show';
+  document.getElementById('hint-box').textContent='💡 Tip van Nick Slick: '+q.hint;
+  document.getElementById('hint-box').className='hint-box show';
   hintUsed=true;
 }
-function parseN(s){if(!s)return NaN;return parseFloat(s.replace(',','.').replace(/\s/g,''))}
-function revealAnswer(){
-  const q=questions[qIdx];
-  const fa=document.getElementById('final-answer');
-  const fb=document.getElementById('feedback-box');
-  const answerStr=q.unit==='€'?eurClean(q.finalAnswer):`${q.finalAnswer}%`;
-  fb.innerHTML=`Het goede antwoord is: <span style="color:var(--ibiza-yellow);font-size:1.4rem"> ${answerStr}</span><br><span style="font-size:.9rem;opacity:.7">${q.label}</span>`;
-  fb.className='feedback-box show reveal';
-  fa.value=q.unit==='€'?q.finalAnswer.toFixed(2).replace('.',','):String(q.finalAnswer);
-  fa.readOnly=true;fa.className='err';
-  document.getElementById('dot-'+qIdx).classList.remove('current');
-  document.getElementById('dot-'+qIdx).classList.add('skipped');
-  document.getElementById('btn-check').style.display='none';
-  document.getElementById('btn-hint').style.display='none';
-  document.getElementById('btn-next').style.display='inline-block';
-  answered=true;
-}
+
+function parseN(s){if(!s)return NaN;return parseFloat(s.replace(',','.').replace(/\s/g,''));}
+
 function checkAnswer(){
-  if(answered)return;
+  if(questionDone)return;
   const q=questions[qIdx];
+  const fb=document.getElementById('feedback-box');
+
+  // Validatie: minstens 4 tabelvakjes ingevuld
   let filled=0;
   q.cols.forEach((_,i)=>{
     if((document.getElementById('ct'+i)||{}).value?.trim())filled++;
     if((document.getElementById('cb'+i)||{}).value?.trim())filled++;
   });
-  const fb=document.getElementById('feedback-box');
-  if(filled<4){fb.textContent='Vul minimaal 4 vakjes in de tabel in, Nick Slick wacht!';fb.className='feedback-box show warn';return;}
+  if(filled<4){
+    fb.textContent='Vul minimaal 4 vakjes in de tabel in, Nick Slick wacht!';
+    fb.className='feedback-box show warn';
+    return;
+  }
+
   const fa=document.getElementById('final-answer');
-  if(!fa.value.trim()){fb.textContent='Vul je antwoord in! Familie Brokken rekent op jou!';fb.className='feedback-box show warn';return;}
+  if(!fa.value.trim()){
+    fb.textContent='Vul je antwoord in! Familie Brokken rekent op jou!';
+    fb.className='feedback-box show warn';
+    return;
+  }
+
   const val=parseN(fa.value);
-  const ok=Math.abs(val-q.finalAnswer)<.11;
+  const ok=Math.abs(val-q.finalAnswer)<0.11;
+
   if(ok){
-    const pts=hintUsed?2:3;score+=pts;
+    // GOED antwoord
+    const pts=hintUsed?2:3;
+    score+=pts;
     document.getElementById('score-val').textContent=score;
-    document.getElementById('dot-'+qIdx).classList.remove('current');
-    document.getElementById('dot-'+qIdx).classList.add('correct');
     fa.className='ok';
     const msgs=['Super! Grijp die prijs!','Geweldig! Nick Slick is trots!','Toppie! Ibiza nadert!','Briljant! Familie Brokken juicht!','Knap! Zelfs Fortuin is onder de indruk!'];
     fb.textContent=`✅ ${pick(msgs)} ${q.label} (+${pts} pt)`;
     fb.className='feedback-box show good';
     spawnConfetti(fb);
-    fa.readOnly=true;
-    document.getElementById('btn-check').style.display='none';
-    document.getElementById('btn-hint').style.display='none';
-    document.getElementById('btn-next').style.display='inline-block';
-    answered=true;
+    lockQuestion(true);
   }else{
-    attempts++;updateAttemptDots();
+    // FOUT antwoord — poging tellen
+    attempts++;
+    updateAttemptDots();
+
     if(attempts>=MAX_ATTEMPTS){
+      // 2e fout: toon antwoord, geen punten, ga naar volgende
       revealAnswer();
     }else{
-      const errs=['Helaas! Puk zegt: "Ik ga stuk..." Nog één poging!','Niet goed! Ellen wil naar het toilet van de zenuwen. Probeer het nog een keer!'];
-      fb.textContent=pick(errs);fb.className='feedback-box show bad';
-      fa.className='err';
+      // 1e fout: nog één kans
+      const errs=[
+        'Helaas! Puk zegt: "Ik ga stuk..." Nog één poging!',
+        'Niet goed! Ellen wil naar het toilet van de zenuwen. Nog één kans!'
+      ];
+      fb.textContent=pick(errs);
+      fb.className='feedback-box show bad';
       const card=document.getElementById('question-card');
-      card.classList.add('shake');setTimeout(()=>card.classList.remove('shake'),400);
-      setTimeout(()=>{fa.value='';fa.className='';fa.focus();},800);
+      card.classList.add('shake');
+      setTimeout(()=>card.classList.remove('shake'),400);
+      // Leeg invoerveld en focus opnieuw
+      fa.value='';
+      fa.className='';
+      setTimeout(()=>fa.focus(),450);
     }
   }
 }
+
 function spawnConfetti(container){
   const colors=['#FFD700','#E91E8C','#00C9B1','#FF6B35','#22c55e'];
   for(let i=0;i<12;i++){
@@ -376,7 +421,13 @@ function spawnConfetti(container){
     setTimeout(()=>p.remove(),1400);
   }
 }
-function nextQ(){qIdx++;if(qIdx>=8)endGame();else renderQ();}
+
+function nextQ(){
+  qIdx++;
+  if(qIdx>=8)endGame();
+  else renderQ();
+}
+
 function endGame(){
   const max=24,pct=Math.round(score/max*100);
   let emoji,title,msg;
@@ -390,6 +441,7 @@ function endGame(){
   document.getElementById('end-sub').textContent=msg;
   showScreen('end');
 }
+
 function makeStars(){
   const c=document.getElementById('stars');
   for(let i=0;i<60;i++){
